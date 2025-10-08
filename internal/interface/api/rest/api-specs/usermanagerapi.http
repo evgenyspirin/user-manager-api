@@ -1,0 +1,95 @@
+# Variables
+@host = http://localhost:8080
+@base = {{host}}/api/v1
+@users = {{base}}/users
+@auth = {{base}}/auth/login
+
+# todo: put a real uuid
+@user_id = *****
+@user_files = {{base}}/users/{{user_id}}/files
+
+# todo: put a real token
+@token = *****
+
+###
+# Login Admin user
+POST {{auth}}
+Content-Type: application/json
+Accept: application/json
+
+{
+  "email": "admin@example.com",
+  "password": "admin123"
+}
+
+###
+# Create user
+POST {{users}}
+Authorization: Bearer {{token}}
+Content-Type: application/json
+Accept: application/json
+
+{
+  "email": "john.doe@example.com",
+  "name": "John",
+  "lastname": "Doe",
+  "birth_date": "1990-05-20",
+  "phone": "+33755555555"
+}
+
+###
+# Get single user by UUID
+GET {{users}}/{{user_id}}
+Accept: application/json
+
+###
+# List users (paginated)
+GET {{users}}?page=1
+Accept: application/json
+
+###
+# Update user by UUID
+PUT {{users}}/{{user_id}}
+Authorization: Bearer {{token}}
+Content-Type: application/json
+Accept: application/json
+
+{
+  "email": "johnny.doe@example.com",
+  "name": "Johnny",
+  "lastname": "Doe",
+  "birth_date": "1990-05-20",
+  "phone": "+33755555556"
+}
+
+###
+# Upload a file (multipart/form-data)
+# todo: replace path "/example.pdf" with a real file path and set "filename" on your wish
+POST {{user_files}}
+Authorization: Bearer {{token}}
+Content-Type: multipart/form-data; boundary=MyBoundary
+Accept: application/json
+
+--MyBoundary
+Content-Disposition: form-data; name="file"; filename="example.pdf"
+Content-Type: application/pdf
+
+< /example.pdf
+--MyBoundary--
+
+###
+# List user files (paginated)
+GET {{user_files}}?page=1
+Accept: application/json
+
+###
+# Delete all files for the user
+DELETE {{user_files}}
+Authorization: Bearer {{token}}
+Accept: */*
+
+###
+# Delete user by UUID
+DELETE {{users}}/{{user_id}}
+Authorization: Bearer {{token}}
+Accept: */*
