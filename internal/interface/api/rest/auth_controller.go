@@ -3,12 +3,12 @@ package rest
 import (
 	"errors"
 	"net/http"
+	"user-manager-api/internal/application/services"
 
 	"github.com/gin-gonic/gin"
 	"go.uber.org/zap"
 
 	"user-manager-api/internal/application/ports"
-	userDB "user-manager-api/internal/infrastructure/db/postgres/user"
 	"user-manager-api/internal/interface/api/rest/dto/auth"
 	"user-manager-api/internal/interface/api/rest/validator"
 )
@@ -73,10 +73,10 @@ func (ac *AuthController) LoginHandler(c *gin.Context) {
 
 	token, err := ac.authService.GenerateToken(u, req.Password)
 	if err != nil {
-		if errors.Is(err, userDB.ErrEmailAlreadyExists) {
+		if errors.Is(err, services.ErrInvalidCredentials) {
 			c.JSON(http.StatusUnauthorized, gin.H{"error": err.Error()})
 		}
-		if errors.Is(err, userDB.ErrEmailAlreadyExists) {
+		if errors.Is(err, services.ErrFailedToGenerateToken) {
 			ac.logger.Error("GenerateToken() error", zap.Error(err), zap.Stringer("user_uuid", u.UUID))
 			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		}

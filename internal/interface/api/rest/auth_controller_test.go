@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"testing"
+	"user-manager-api/internal/application/services"
 
 	"github.com/gin-gonic/gin"
 	"github.com/stretchr/testify/assert"
@@ -16,7 +17,6 @@ import (
 	"go.uber.org/zap"
 
 	"user-manager-api/internal/application/ports"
-	userDB "user-manager-api/internal/infrastructure/db/postgres/user"
 	"user-manager-api/internal/interface/api/rest/dto/auth"
 
 	domain "user-manager-api/internal/domain/user"
@@ -145,18 +145,34 @@ func TestAuthController_LoginHandler(t *testing.T) {
 			},
 		},
 		{
-			name: "GenerateToken ErrEmailAlreadyExists -> 401 or 500",
+			name: "GenerateToken ErrInvalidCredentials -> 401",
 			body: validLogin(),
 			fields: fields{
 				findByEmail: func(ctx context.Context, email string) (*domain.User, error) {
 					return &domain.User{}, nil
 				},
 				generateToken: func(u *domain.User, password string) (string, error) {
-					return "", userDB.ErrEmailAlreadyExists
+					return "", services.ErrInvalidCredentials
 				},
 			},
 			want: want{
-				oneOfCodes:  []int{http.StatusUnauthorized, http.StatusInternalServerError},
+				oneOfCodes:  []int{http.StatusUnauthorized},
+				jsonHasKeys: []string{"error"},
+			},
+		},
+		{
+			name: "GenerateToken ErrFailedToGenerateToken -> 500",
+			body: validLogin(),
+			fields: fields{
+				findByEmail: func(ctx context.Context, email string) (*domain.User, error) {
+					return &domain.User{}, nil
+				},
+				generateToken: func(u *domain.User, password string) (string, error) {
+					return "", services.ErrFailedToGenerateToken
+				},
+			},
+			want: want{
+				oneOfCodes:  []int{http.StatusInternalServerError},
 				jsonHasKeys: []string{"error"},
 			},
 		},
